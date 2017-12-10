@@ -18,16 +18,12 @@ class Entity(pygame.sprite.Sprite):
             self.rect.y = self.position[1]
             for wall in walls:
                 if self.rect.colliderect(wall): print("moved"); continue
-            else: break
-
-
-
-
+            else: positionNotSet = False
 
     def move(self, direction):
         #if collides with wall will move back
         if direction == "up":
-            self.position[1] -= tileSize[1]; player.rect.y = player.position[1]
+            self.position[1] -= tileSize[1]; self.rect.y = self.position[1]
             for wall in walls:
                 if self.rect.colliderect(wall):
                     self.position[1] += tileSize[1]
@@ -35,16 +31,16 @@ class Entity(pygame.sprite.Sprite):
                     break
 
         elif direction == "left":
-            self.position[0] -= tileSize[0]; player.rect.x = player.position[0]
+            self.position[0] -= tileSize[0]; self.rect.x = self.position[0]
             for wall in walls:
                 if self.rect.colliderect(wall):
                     self.position[0] += tileSize[0]
-                    self.rect.x = player.position[0]
+                    self.rect.x = self.position[0]
                     break
 
 
         elif direction == "down":
-            self.position[1] += tileSize[1]; player.rect.y = player.position[1]
+            self.position[1] += tileSize[1]; self.rect.y = self.position[1]
             for wall in walls:
                 if self.rect.colliderect(wall):
                     self.position[1] -= tileSize[1]
@@ -52,7 +48,7 @@ class Entity(pygame.sprite.Sprite):
                     break
 
         elif direction == "right":
-            self.position[0] += tileSize[0]; player.rect.x = player.position[0]
+            self.position[0] += tileSize[0]; self.rect.x = self.position[0]
             for wall in walls:
                 if self.rect.colliderect(wall):
                     self.position[0] -= tileSize[0]
@@ -63,6 +59,52 @@ class Troll(Entity, pygame.sprite.Sprite):
     def __init__(self, color):
         Entity.__init__(self,color)
         pygame.sprite.Sprite.__init__(self)
+
+    def getmoves(self):
+        self.canMoveRight = True
+        self.canMoveUp = True
+        self.canMoveDown = True
+        self.canMoveLeft = True
+        #checks if can move right
+        self.rect.x += tileSize[0]
+        for wall in walls:
+            if wall.rect.colliderect(self):
+                print("collided on right"); self.canMoveRight = False; break
+        self.rect.x = self.position[0]
+        #checks to see if can move left
+        self.rect.x -= tileSize[0]
+        for wall in walls:
+            if wall.rect.colliderect(self):
+                print("collided on left"); self.canMoveLeft = False; break
+        self.rect.x = self.position[0]
+        #checks to see if can move up
+        self.rect.y -= tileSize[1]
+        for wall in walls:
+            if wall.rect.colliderect(self):
+                print("collided on up"); self.canMoveUp = False; break
+        self.rect.y = self.position[1]
+        #check to see if can move down
+        self.rect.y += tileSize[1]
+        for wall in walls:
+            if wall.rect.colliderect(self):
+                print("collided on down"); self.canMoveDown = False; break
+        self.rect.y = self.position[1]
+
+        directions = []
+        print("Directions can move: ")
+        if self.canMoveLeft: print("left"); directions.append("left")
+        if self.canMoveRight: print("right"); directions.append("right")
+        if self.canMoveUp: print("up"); directions.append("up")
+        if self.canMoveDown: print("down"); directions.append("down")
+        return directions
+
+    def findPlayer(self):
+        #in left direction
+        for i in range(1,6):
+            self.rect.x -= tileSize[0]
+            if player.rect.colliderect(self): return "left"
+        self.rect.x = self.position[0]
+
 
 
 
@@ -87,6 +129,8 @@ class movableWall(Block, pygame.sprite.Sprite):
     def __init__(self,x,y):
         Block.__init__(self,x,y)
         pygame.sprite.Sprite.__init__(self)
+
+
 
 def draw():
     screen.fill((255,255,255))
@@ -126,13 +170,12 @@ for i in range(0,height,tileSize[1]):
     wall = immovableWall(width-tileSize[0],i) # keeps it on screen
     walls.append(wall)
 #----[End Wall Generation]------------------------------------------------------
-
+#----[Create Entities]----------------------------------------------------------
 player = Entity(BLUE)
 troll1 = Troll(RED)
-troll1.position = [16,16]
-troll2 = Troll(RED)
-troll2.position = [64,16]
-trolls = [troll1,troll2]
+trolls = [troll1]
+#----[End Create Entities]------------------------------------------------------
+
 
 print("----[NEW RUN]----")
 
@@ -150,7 +193,10 @@ while True: #Game loop
 
     if playerInput:
         for troll in trolls:
-            troll.move(choice(["left","right","up","down"]))
+            directions = troll.getmoves()
+            playerInDirection = troll.findPlayer()
+            print(playerInDirection)
+            troll.move(choice(directions))
         playerInput = False
 
     draw()
