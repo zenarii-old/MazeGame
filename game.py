@@ -1,6 +1,8 @@
 from random import randint, choice
 import pygame, sys
+import mazeGenerator
 
+#TODO maze generation - conver list to wall objects
 class Entity(pygame.sprite.Sprite):
     def __init__(self, color):
         #Any position in width/length, but a multiple of 30 to fit grid
@@ -11,14 +13,18 @@ class Entity(pygame.sprite.Sprite):
 
         self.rect = self.image.get_rect()
 
-        positionNotSet=True
-        while positionNotSet:
+        self.inWall = False
+        self.positionNotSet=True
+        #TODO FIX THIS --¬ i think it doens't change position when over
+        #                V
+        while self.positionNotSet:
             self.position=[choice(range(0,width,16)),choice(range(0,height,16))]
+            print(self.position)
             self.rect.x = self.position[0]
             self.rect.y = self.position[1]
             for wall in walls:
-                if wall.rect.colliderect(self): print("moved"); continue
-            else: positionNotSet = False
+                if wall.rect.colliderect(self): self.inWall = True; print("moved");break
+            if not self.inWall: break
 
     def move(self, direction):
         #if collides with wall will move back
@@ -191,19 +197,19 @@ leftKey = pygame.K_a
 downKey = pygame.K_s
 rightKey = pygame.K_d
 #----[Wall Generation]----------------------------------------------------------
-walls = []
-#Generate immovable edge walls (left and right)
-for i in range(0,width,tileSize[0]):
-    wall = immovableWall(i,0)
-    walls.append(wall)
-    wall = immovableWall(i,height-tileSize[1]) #to make it on screen
-    walls.append(wall)
-#Generate immovable edge walls (top and bottom)
-for i in range(0,height,tileSize[1]):
-    wall = immovableWall(0,i)
-    walls.append(wall)
-    wall = immovableWall(width-tileSize[0],i) # keeps it on screen
-    walls.append(wall)
+mazeString = mazeGenerator.generate(27,20)
+walls = [] #holds all wall objects, immovable or unmovable
+mazeList = []
+mazeRow = []
+for i in mazeString:
+    if i == "\n": mazeList.append(mazeRow); mazeRow = []
+    else: mazeRow.append(i)
+
+for y in range(0,len(mazeList)-1):
+    for x in range(y):
+        if mazeList[y][x] == "+":
+            wall = immovableWall(x*16,y*16)
+            walls.append(wall)
 
 
 #----[End Wall Generation]------------------------------------------------------
@@ -217,8 +223,8 @@ trolls = [troll1]
 print("----[NEW RUN]----")
 
 while True: #Game loop
+    playerInput = False
     for event in pygame.event.get():
-        playerInput = False
         pressed = pygame.key.get_pressed()
         if event.type == pygame.QUIT:
             sys.exit()
