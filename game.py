@@ -156,7 +156,6 @@ class Troll(Entity, pygame.sprite.Sprite):
         self.rect.y = self.position[1]
 
     def die(self):
-        print("Troll is dead")
         self.posInList = trolls.index(self)
         trolls.pop(self.posInList)
 
@@ -179,6 +178,9 @@ class immovableWall(Block, pygame.sprite.Sprite):
     def __init__(self,x,y):
         Block.__init__(self,x,y)
         pygame.sprite.Sprite.__init__(self)
+
+    def push(self,direction):
+        pass
 
 class movableWall(Block, pygame.sprite.Sprite):
     def __init__(self,x,y):
@@ -257,14 +259,16 @@ for y in range(len(mazeList)):
     for x in range(len(mazeList[y])):
         #if a wall char make a wall
         if mazeList[y][x] == "+":
-            #edge walls cannot be moved
+            #checks to see if edge wall is being created
+            #if it is the wall cannot be moved
             if x == 0 or y == 0:
                 wall = immovableWall(x*16,y*16)
-            elif x == width - 16 or y == height - 16:
+            elif x * 16 == width - 16 or y * 16 == height - 16:
                 wall = immovableWall(x*16,y*16)
             #Other walls can be moved
             else:
                 wall = movableWall(x*16,y*16)
+            #adds the wall, whatever type, to the list of walls
             walls.append(wall)
 
 #----[End Wall Generation]------------------------------------------------------
