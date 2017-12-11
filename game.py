@@ -1,21 +1,21 @@
 from random import randint, choice
 import pygame, sys
 import mazeGenerator
+from os import path
 
 
 class Entity(pygame.sprite.Sprite):
-    def __init__(self, color):
+    def __init__(self, spriteImage):
         pygame.sprite.Sprite.__init__(self)
         self.image = pygame.Surface(tileSize)
-        self.image.fill(color)
-
         self.rect = self.image.get_rect()
-
+        self.picture = spriteImage
         self.inWall = False
         self.positionNotSet = True
 
         while self.positionNotSet:
-            self.position=[choice(range(0,width,16)),choice(range(0,height,16))]
+            self.position=[choice(range(0,width,32)),
+                           choice(range(0,height,32))]
             self.rect.x = self.position[0]
             self.rect.y = self.position[1]
             for wall in walls:
@@ -189,31 +189,31 @@ class movableWall(Block, pygame.sprite.Sprite):
 
     def push(self, direction):
         if direction == "up":
-            self.rect.y -= 16
+            self.rect.y -= 32
             for wall in walls:
                 if wall.rect.colliderect(self) and wall is not self:
-                    self.rect.y += 16; break
+                    self.rect.y += 32; break
             else: self.position[1] = self.rect.y
 
         elif direction == "left":
-            self.rect.x -= 16
+            self.rect.x -= 32
             for wall in walls:
                 if wall.rect.colliderect(self) and wall is not self:
-                    self.rect.x += 16; break
+                    self.rect.x += 32; break
             else: self.position[0] = self.rect.x
 
         elif direction == "down":
-            self.rect.y += 16
+            self.rect.y += 32
             for wall in walls:
                 if wall.rect.colliderect(self) and wall is not self:
-                    self.rect.y -= 16; break
+                    self.rect.y -= 32; break
             else: self.position[1] = self.rect.y
 
         elif direction == "right":
-            self.rect.x += 16
+            self.rect.x += 32
             for wall in walls:
                 if wall.rect.colliderect(self) and wall is not self:
-                    self.rect.x -= 16; break
+                    self.rect.x -= 32; break
             else: self.position[0] = self.rect.x
 
         for troll in trolls:
@@ -221,16 +221,16 @@ class movableWall(Block, pygame.sprite.Sprite):
 
 #----[Draw To Screen Function]--------------------------------------------------
 def draw():
-    screen.fill((255,255,255))
+    screen.fill((0,0,0))
 
-    screen.blit(player.image,player.position)
-    for wall in walls: screen.blit(wall.image, wall.position)
-    for troll in trolls: screen.blit(troll.image, troll.position)
+    screen.blit(player.picture,player.position)
+    for wall in walls: screen.blit(wallimg, wall.position)
+    for troll in trolls: screen.blit(troll.picture, troll.position)
     pygame.display.flip()
 #----[End Draw To Screen Function]----------------------------------------------
 #----[Game Setup]---------------------------------------------------------------
-tileSize = (16,16)
-size = width, height = int(tileSize[0] * 27), int(tileSize[1] * 19)
+tileSize = (32,32)
+size = width, height = 800, 600
 screen = pygame.display.set_mode(size)
 pygame.display.set_caption("Escape the trolls!")
 screen.fill((0,0,255))
@@ -245,7 +245,8 @@ downKey = pygame.K_s
 rightKey = pygame.K_d
 #----[End Game Setup]-----------------------------------------------------------
 #----[Wall Generation]----------------------------------------------------------
-mazeString = mazeGenerator.generate(13,9)
+mazeString = mazeGenerator.generate(int(width/tileSize[0]/2),
+                                    int(height/tileSize[1]/2))
 walls = [] #holds all wall objects, immovable or unmovable
 mazeList = [] # when string is broken to list each list row is added
 mazeRow = [] # each character is the mazeString is added to this
@@ -262,21 +263,26 @@ for y in range(len(mazeList)):
             #checks to see if edge wall is being created
             #if it is the wall cannot be moved
             if x == 0 or y == 0:
-                wall = immovableWall(x*16,y*16)
-            elif x * 16 == width - 16 or y * 16 == height - 16:
-                wall = immovableWall(x*16,y*16)
+                wall = immovableWall(x*32,y*32)
+            elif x * 32 == width - 32 or y * 32 == height - 32:
+                wall = immovableWall(x*32,y*32)
             #Other walls can be moved
             else:
-                wall = movableWall(x*16,y*16)
+                wall = movableWall(x*32,y*32)
             #adds the wall, whatever type, to the list of walls
             walls.append(wall)
 
 #----[End Wall Generation]------------------------------------------------------
+#----[Set image locations]------------------------------------------------------
+trollimg = pygame.image.load(path.join("images","Troll.bmp"))
+playerimg = pygame.image.load(path.join("images", "Player.bmp"))
+wallimg = pygame.image.load(path.join("images", "Wall.bmp"))
+#----[End Images]---------------------------------------------------------------
 #----[Create Entities]----------------------------------------------------------
-player = Entity(BLUE)
-troll1 = Troll(RED)
-troll2 = Troll(RED)
-troll3 = Troll(RED)
+player = Entity(playerimg)
+troll1 = Troll(trollimg)
+troll2 = Troll(trollimg)
+troll3 = Troll(trollimg)
 trolls = [troll1,troll2,troll3]
 #----[End Create Entities]------------------------------------------------------
 #----[Main Run Loop]------------------------------------------------------------
