@@ -1,0 +1,2 @@
+# MazeGame
+Basic Pygame game
