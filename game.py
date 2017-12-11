@@ -2,11 +2,9 @@ from random import randint, choice
 import pygame, sys
 import mazeGenerator
 
-#TODO maze generation - conver list to wall objects
+
 class Entity(pygame.sprite.Sprite):
     def __init__(self, color):
-        #Any position in width/length, but a multiple of 30 to fit grid
-
         pygame.sprite.Sprite.__init__(self)
         self.image = pygame.Surface(tileSize)
         self.image.fill(color)
@@ -15,8 +13,7 @@ class Entity(pygame.sprite.Sprite):
 
         self.inWall = False
         self.positionNotSet = True
-        #TODO FIX THIS --¬ It doesn't correctly break loop
-        #                V
+
         while self.positionNotSet:
             self.position=[choice(range(0,width,16)),choice(range(0,height,16))]
             self.rect.x = self.position[0]
@@ -25,7 +22,7 @@ class Entity(pygame.sprite.Sprite):
                 if wall.rect.colliderect(self):break
             else:
                 self.positionNotSet = False
-            #should exit loop but doesn't
+
 
 
     def move(self, direction):
@@ -102,6 +99,7 @@ class Troll(Entity, pygame.sprite.Sprite):
                 self.canMoveDown = False; break
         self.rect.y = self.position[1]
 
+        #adds the possible directions to list then returns it
         directions = []
         if self.canMoveLeft: directions.append("left")
         if self.canMoveRight: directions.append("right")
@@ -110,6 +108,10 @@ class Troll(Entity, pygame.sprite.Sprite):
         return directions
 
     def findPlayer(self):
+        """Checks in each direction for 5 blocks, if player is found
+        then moves in that direction, if hits wall stops searching.
+
+        Returns None if player isn't found"""
         #in left direction
         wallHit = False
         for i in range(1,6):
@@ -176,7 +178,7 @@ class movableWall(Block, pygame.sprite.Sprite):
         Block.__init__(self,x,y)
         pygame.sprite.Sprite.__init__(self)
 
-
+#----[Draw To Screen Function]--------------------------------------------------
 def draw():
     screen.fill((255,255,255))
 
@@ -184,9 +186,8 @@ def draw():
     for wall in walls: screen.blit(wall.image, wall.position)
     for troll in trolls: screen.blit(troll.image, troll.position)
     pygame.display.flip()
-
-
-
+#----[End Draw To Screen Function]----------------------------------------------
+#----[Game Setup]---------------------------------------------------------------
 tileSize = (16,16)
 size = width, height = int(tileSize[0] * 27), int(tileSize[1] * 19)
 screen = pygame.display.set_mode(size)
@@ -201,11 +202,12 @@ upKey = pygame.K_w
 leftKey = pygame.K_a
 downKey = pygame.K_s
 rightKey = pygame.K_d
+#----[End Game Setup]-----------------------------------------------------------
 #----[Wall Generation]----------------------------------------------------------
 mazeString = mazeGenerator.generate(13,9)
 walls = [] #holds all wall objects, immovable or unmovable
-mazeList = []
-mazeRow = []
+mazeList = [] # when string is broken to list each list row is added
+mazeRow = [] # each character is the mazeString is added to this
 
 
 for i in mazeString:
@@ -234,8 +236,7 @@ troll2 = Troll(RED)
 troll3 = Troll(RED)
 trolls = [troll1,troll2,troll3]
 #----[End Create Entities]------------------------------------------------------
-
-
+#----[Main Run Loop]------------------------------------------------------------
 print("----[NEW RUN]----")
 
 while True: #Game loop
@@ -244,7 +245,7 @@ while True: #Game loop
         pressed = pygame.key.get_pressed()
         if event.type == pygame.QUIT:
             sys.exit()
-
+        #checks for any input from player, does it then allows trolls to move
         if pressed[upKey]: player.move("up"); playerInput = True
         elif pressed[leftKey]: player.move("left");  playerInput = True
         elif pressed[downKey]: player.move("down");  playerInput = True
@@ -258,5 +259,6 @@ while True: #Game loop
             if playerInDirection is not None: troll.move(playerInDirection)
             else: troll.move(choice(directions))
         playerInput = False
-
+    #draws changes to screen
     draw()
+#----[End Program]--------------------------------------------------------------
