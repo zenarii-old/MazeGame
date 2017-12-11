@@ -185,7 +185,6 @@ def draw():
     for troll in trolls: screen.blit(troll.image, troll.position)
     pygame.display.flip()
 
-    movedWalls = []
 
 
 tileSize = (16,16)
@@ -215,8 +214,16 @@ for i in mazeString:
 
 for y in range(len(mazeList)):
     for x in range(len(mazeList[y])):
+        #if a wall char make a wall
         if mazeList[y][x] == "+":
-            wall = immovableWall(x*16,y*16)
+            #edge walls cannot be moved
+            if x == 0 or y == 0:
+                wall = immovableWall(x*16,y*16)
+            elif x == width - 16 or y == height - 16:
+                wall = immovableWall(x*16,y*16)
+            #Other walls can be moved
+            else:
+                wall = movableWall(x*16,y*16)
             walls.append(wall)
 
 #----[End Wall Generation]------------------------------------------------------
