@@ -225,7 +225,7 @@ player = Entity(BLUE)
 troll1 = Troll(RED)
 troll2 = Troll(RED)
 troll3 = Troll(RED)
-trolls = [troll1]
+trolls = [troll1,troll2,troll3]
 #----[End Create Entities]------------------------------------------------------
 
 
