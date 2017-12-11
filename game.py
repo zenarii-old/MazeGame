@@ -26,11 +26,12 @@ class Entity(pygame.sprite.Sprite):
 
 
     def move(self, direction):
-        #if collides with wall will move back
+        #if hits with wall will move back
         if direction == "up":
             self.position[1] -= tileSize[1]; self.rect.y = self.position[1]
             for wall in walls:
                 if self.rect.colliderect(wall):
+                    wall.push("up")
                     self.position[1] += tileSize[1]
                     self.rect.y = self.position[1]
                     break
@@ -39,6 +40,7 @@ class Entity(pygame.sprite.Sprite):
             self.position[0] -= tileSize[0]; self.rect.x = self.position[0]
             for wall in walls:
                 if self.rect.colliderect(wall):
+                    wall.push("left")
                     self.position[0] += tileSize[0]
                     self.rect.x = self.position[0]
                     break
@@ -48,6 +50,7 @@ class Entity(pygame.sprite.Sprite):
             self.position[1] += tileSize[1]; self.rect.y = self.position[1]
             for wall in walls:
                 if self.rect.colliderect(wall):
+                    wall.push("down")
                     self.position[1] -= tileSize[1]
                     self.rect.y = self.position[1]
                     break
@@ -56,6 +59,7 @@ class Entity(pygame.sprite.Sprite):
             self.position[0] += tileSize[0]; self.rect.x = self.position[0]
             for wall in walls:
                 if self.rect.colliderect(wall):
+                    wall.push("right")
                     self.position[0] -= tileSize[0]
                     self.rect.x = self.position[0]
                     break
@@ -151,7 +155,10 @@ class Troll(Entity, pygame.sprite.Sprite):
             if wallHit: break
         self.rect.y = self.position[1]
 
-
+    def die(self):
+        print("Troll is dead")
+        self.posInList = trolls.index(self)
+        trolls.pop(self.posInList)
 
 
 class Block(pygame.sprite.Sprite):
@@ -177,6 +184,38 @@ class movableWall(Block, pygame.sprite.Sprite):
     def __init__(self,x,y):
         Block.__init__(self,x,y)
         pygame.sprite.Sprite.__init__(self)
+
+    def push(self, direction):
+        if direction == "up":
+            self.rect.y -= 16
+            for wall in walls:
+                if wall.rect.colliderect(self) and wall is not self:
+                    self.rect.y += 16; break
+            else: self.position[1] = self.rect.y
+
+        elif direction == "left":
+            self.rect.x -= 16
+            for wall in walls:
+                if wall.rect.colliderect(self) and wall is not self:
+                    self.rect.x += 16; break
+            else: self.position[0] = self.rect.x
+
+        elif direction == "down":
+            self.rect.y += 16
+            for wall in walls:
+                if wall.rect.colliderect(self) and wall is not self:
+                    self.rect.y -= 16; break
+            else: self.position[1] = self.rect.y
+
+        elif direction == "right":
+            self.rect.x += 16
+            for wall in walls:
+                if wall.rect.colliderect(self) and wall is not self:
+                    self.rect.x -= 16; break
+            else: self.position[0] = self.rect.x
+
+        for troll in trolls:
+            if troll.rect.colliderect(self): troll.die()
 
 #----[Draw To Screen Function]--------------------------------------------------
 def draw():
@@ -257,7 +296,8 @@ while True: #Game loop
             playerInDirection = troll.findPlayer()
             #troll will follow player if it can see it
             if playerInDirection is not None: troll.move(playerInDirection)
-            else: troll.move(choice(directions))
+            #if directions is empty list then error is raised
+            elif directions != []: troll.move(choice(directions))
         playerInput = False
     #draws changes to screen
     draw()
