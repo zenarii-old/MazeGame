@@ -1,6 +1,8 @@
 from random import randint, choice
 import pygame, sys
+import mazeGenerator
 
+#TODO maze generation - conver list to wall objects
 class Entity(pygame.sprite.Sprite):
     def __init__(self, color):
         #Any position in width/length, but a multiple of 30 to fit grid
@@ -11,14 +13,20 @@ class Entity(pygame.sprite.Sprite):
 
         self.rect = self.image.get_rect()
 
-        positionNotSet=True
-        while positionNotSet:
+        self.inWall = False
+        self.positionNotSet = True
+        #TODO FIX THIS --¬ It doesn't correctly break loop
+        #                V
+        while self.positionNotSet:
             self.position=[choice(range(0,width,16)),choice(range(0,height,16))]
             self.rect.x = self.position[0]
             self.rect.y = self.position[1]
             for wall in walls:
-                if wall.rect.colliderect(self): print("moved"); continue
-            else: positionNotSet = False
+                if wall.rect.colliderect(self):break
+            else:
+                self.positionNotSet = False
+            #should exit loop but doesn't
+
 
     def move(self, direction):
         #if collides with wall will move back
@@ -147,7 +155,9 @@ class Troll(Entity, pygame.sprite.Sprite):
 class Block(pygame.sprite.Sprite):
     def __init__(self,x,y):
         pygame.sprite.Sprite.__init__(self)
-        self.position = [x,y]
+        self.x = x
+        self.y = y
+        self.position = [self.x,self.y]
         self.image = pygame.Surface(tileSize)
         self.image.fill((100,100,100))
 
@@ -175,9 +185,11 @@ def draw():
     for troll in trolls: screen.blit(troll.image, troll.position)
     pygame.display.flip()
 
+    movedWalls = []
+
 
 tileSize = (16,16)
-size = width, height = int(tileSize[0] * 27), int(tileSize[1] * 20)
+size = width, height = int(tileSize[0] * 27), int(tileSize[1] * 19)
 screen = pygame.display.set_mode(size)
 pygame.display.set_caption("Escape the trolls!")
 screen.fill((0,0,255))
@@ -191,34 +203,37 @@ leftKey = pygame.K_a
 downKey = pygame.K_s
 rightKey = pygame.K_d
 #----[Wall Generation]----------------------------------------------------------
-walls = []
-#Generate immovable edge walls (left and right)
-for i in range(0,width,tileSize[0]):
-    wall = immovableWall(i,0)
-    walls.append(wall)
-    wall = immovableWall(i,height-tileSize[1]) #to make it on screen
-    walls.append(wall)
-#Generate immovable edge walls (top and bottom)
-for i in range(0,height,tileSize[1]):
-    wall = immovableWall(0,i)
-    walls.append(wall)
-    wall = immovableWall(width-tileSize[0],i) # keeps it on screen
-    walls.append(wall)
+mazeString = mazeGenerator.generate(13,9)
+walls = [] #holds all wall objects, immovable or unmovable
+mazeList = []
+mazeRow = []
 
+
+for i in mazeString:
+    if i == "\n": mazeList.append(mazeRow); mazeRow = []
+    else: mazeRow.append(i)
+
+for y in range(len(mazeList)):
+    for x in range(len(mazeList[y])):
+        if mazeList[y][x] == "+":
+            wall = immovableWall(x*16,y*16)
+            walls.append(wall)
 
 #----[End Wall Generation]------------------------------------------------------
 #----[Create Entities]----------------------------------------------------------
 player = Entity(BLUE)
 troll1 = Troll(RED)
-trolls = [troll1]
+troll2 = Troll(RED)
+troll3 = Troll(RED)
+trolls = [troll1,troll2,troll3]
 #----[End Create Entities]------------------------------------------------------
 
 
 print("----[NEW RUN]----")
 
 while True: #Game loop
+    playerInput = False
     for event in pygame.event.get():
-        playerInput = False
         pressed = pygame.key.get_pressed()
         if event.type == pygame.QUIT:
             sys.exit()
