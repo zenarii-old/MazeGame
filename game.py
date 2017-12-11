@@ -14,17 +14,19 @@ class Entity(pygame.sprite.Sprite):
         self.rect = self.image.get_rect()
 
         self.inWall = False
-        self.positionNotSet=True
-        #TODO FIX THIS --¬ i think it doens't change position when over
+        self.positionNotSet = True
+        #TODO FIX THIS --¬ It doesn't correctly break loop
         #                V
         while self.positionNotSet:
             self.position=[choice(range(0,width,16)),choice(range(0,height,16))]
-            print(self.position)
             self.rect.x = self.position[0]
             self.rect.y = self.position[1]
             for wall in walls:
-                if wall.rect.colliderect(self): self.inWall = True; print("moved");break
-            if not self.inWall: break
+                if wall.rect.colliderect(self):break
+            else:
+                self.positionNotSet = False
+            #should exit loop but doesn't
+
 
     def move(self, direction):
         #if collides with wall will move back
@@ -153,7 +155,9 @@ class Troll(Entity, pygame.sprite.Sprite):
 class Block(pygame.sprite.Sprite):
     def __init__(self,x,y):
         pygame.sprite.Sprite.__init__(self)
-        self.position = [x,y]
+        self.x = x
+        self.y = y
+        self.position = [self.x,self.y]
         self.image = pygame.Surface(tileSize)
         self.image.fill((100,100,100))
 
@@ -181,9 +185,11 @@ def draw():
     for troll in trolls: screen.blit(troll.image, troll.position)
     pygame.display.flip()
 
+    movedWalls = []
+
 
 tileSize = (16,16)
-size = width, height = int(tileSize[0] * 27), int(tileSize[1] * 20)
+size = width, height = int(tileSize[0] * 27), int(tileSize[1] * 19)
 screen = pygame.display.set_mode(size)
 pygame.display.set_caption("Escape the trolls!")
 screen.fill((0,0,255))
@@ -197,25 +203,28 @@ leftKey = pygame.K_a
 downKey = pygame.K_s
 rightKey = pygame.K_d
 #----[Wall Generation]----------------------------------------------------------
-mazeString = mazeGenerator.generate(27,20)
+mazeString = mazeGenerator.generate(13,9)
 walls = [] #holds all wall objects, immovable or unmovable
 mazeList = []
 mazeRow = []
+
+
 for i in mazeString:
     if i == "\n": mazeList.append(mazeRow); mazeRow = []
     else: mazeRow.append(i)
 
-for y in range(0,len(mazeList)-1):
-    for x in range(y):
+for y in range(len(mazeList)):
+    for x in range(len(mazeList[y])):
         if mazeList[y][x] == "+":
             wall = immovableWall(x*16,y*16)
             walls.append(wall)
-
 
 #----[End Wall Generation]------------------------------------------------------
 #----[Create Entities]----------------------------------------------------------
 player = Entity(BLUE)
 troll1 = Troll(RED)
+troll2 = Troll(RED)
+troll3 = Troll(RED)
 trolls = [troll1]
 #----[End Create Entities]------------------------------------------------------
 

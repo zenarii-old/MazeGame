@@ -23,4 +23,3 @@ def generate(width, height):
     for (a, b) in zip(hor, ver):
         s += ''.join(a + ['\n'] + b + ['\n'])
     return s
-print(generate(8,8))
