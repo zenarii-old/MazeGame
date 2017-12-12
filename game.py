@@ -172,6 +172,9 @@ class Block(pygame.sprite.Sprite):
         self.rect = self.image.get_rect()
         self.rect.x = self.position[0]
         self.rect.y = self.position[1]
+    def smash(self):
+        self.positionInList = walls.index(self)
+        walls.pop(self.positionInList)
 
 
 class immovableWall(Block, pygame.sprite.Sprite):
@@ -219,6 +222,22 @@ class movableWall(Block, pygame.sprite.Sprite):
         for troll in trolls:
             if troll.rect.colliderect(self): troll.die()
 
+class Exit(Block, pygame.sprite.Sprite):
+    def __init__(self):
+        #self.position = choice("Top")#,"Bottom","Left","Right")
+        self.rect = ([32,32],[32,32])
+        #if self.position == "Top":
+        self.position = [0,0]
+        self.position[0] = choice(range(0,width,32))
+        self.position[1] = 0
+
+        Block.__init__(self, self.position[0], self.position[1])
+        pygame.sprite.Sprite.__init__(self)
+
+        self.image.fill((100,100,100))
+        for wall in walls:
+            if self.rect.colliderect(wall): wall.smash()
+
 #----[Draw To Screen Function]--------------------------------------------------
 def draw():
     screen.fill((0,0,0))
@@ -226,13 +245,27 @@ def draw():
     screen.blit(player.picture,player.position)
     for wall in walls: screen.blit(wallimg, wall.position)
     for troll in trolls: screen.blit(troll.picture, troll.position)
+    screen.blit(gate.image, gate.position)
     pygame.display.flip()
 #----[End Draw To Screen Function]----------------------------------------------
+#As screen may not fit all tiles unexpected behaviour occurs at borders
+#this shiould prevent that
+def getLength(length):
+    lengthRemainder = length % 32
+    print(lengthRemainder)
+    if lengthRemainder is not 0:
+        return length + (32 - lengthRemainder)
+    else: return length
 #----[Game Setup]---------------------------------------------------------------
 tileSize = (32,32)
-size = width, height = 800, 600
+width, height = 800, 600
+width = getLength(width)
+height = getLength(height)
+
+size = width,height
 screen = pygame.display.set_mode(size)
 pygame.display.set_caption("Escape the trolls!")
+
 screen.fill((0,0,255))
 pygame.display.flip()
 
@@ -256,6 +289,7 @@ for i in mazeString:
     if i == "\n": mazeList.append(mazeRow); mazeRow = []
     else: mazeRow.append(i)
 
+#TODO, bottom row of walls is movable, need to prevent that
 for y in range(len(mazeList)):
     for x in range(len(mazeList[y])):
         #if a wall char make a wall
@@ -284,6 +318,7 @@ troll1 = Troll(trollimg)
 troll2 = Troll(trollimg)
 troll3 = Troll(trollimg)
 trolls = [troll1,troll2,troll3]
+gate = Exit()
 #----[End Create Entities]------------------------------------------------------
 #----[Main Run Loop]------------------------------------------------------------
 print("----[NEW RUN]----")
