@@ -141,9 +141,10 @@ class Troll(Entity, pygame.sprite.Sprite):
             for wall in walls:
                 if wall.rect.colliderect(self): wallHit = True
             #checks through the environment peices to see if they are a corpse
-            for environmentPiece in environment:
-                if environmentPiece.rect.colliderect(self):
-                    if environmentPiece.isCorpse(): return "left"
+            for corpse in corpses:
+                if corpse.rect.colliderect(self):
+                    if corpse.isCorpse():
+                        self.rect.x = self.position[0]; return "left"
             if wallHit: break #won't keep following through walls
         self.rect.x = self.position[0]
 
@@ -155,9 +156,10 @@ class Troll(Entity, pygame.sprite.Sprite):
                 self.rect.x = self.position[0]; return "right"
             for wall in walls:
                 if wall.rect.colliderect(self): wallHit = True
-            for environmentPiece in environment:
-                if environmentPiece.rect.colliderect(self):
-                    if environmentPiece.isCorpse(): return "right"
+            for corpse in corpses:
+                if corpse.rect.colliderect(self):
+                    if corpse.isCorpse():
+                        self.rect.x = self.position[0]; return "right"
             if wallHit: break #won't keep following through walls
         self.rect.x = self.position[0]
 
@@ -169,9 +171,10 @@ class Troll(Entity, pygame.sprite.Sprite):
                 self.rect.y = self.position[1]; return "up"
             for wall in walls:
                 if wall.rect.colliderect(self): wallHit = True
-            for environmentPiece in environment:
-                if environmentPiece.rect.colliderect(self):
-                    if environmentPiece.isCorpse(): return "up"
+            for corpse in corpses:
+                if corpse.rect.colliderect(self):
+                    if corpse.isCorpse():
+                        self.rect.y = self.position[1]; return "up"
             if wallHit: break
         self.rect.y = self.position[1]
 
@@ -183,30 +186,35 @@ class Troll(Entity, pygame.sprite.Sprite):
                 self.rect.y = self.position[1]; return "down"
             for wall in walls:
                 if wall.rect.colliderect(self): wallHit = True
-            for environmentPiece in environment:
-                if environmentPiece.rect.colliderect(self):
-                    if environmentPiece.isCorpse(): return "down"
+            for corpse in corpses:
+                if corpse.rect.colliderect(self):
+                    if corpse.isCorpse():
+                        self.rect.y = self.position[1]; return "down"
             if wallHit: break
         self.rect.y = self.position[1]
 
     def die(self):
+        try:
             self.posInList = trolls.index(self)
             trolls.pop(self.posInList)
             trollCorpse = Corpse(self.position[0], self.position[1])
-            environment.append(trollCorpse)
+            corpses.append(trollCorpse)
+        except ValueError: # For somereason troll.die is called when unneeded
+            print("Troll.die() method called")
+        print(len(trolls))
 
     def eat(self, corpse):
-        corpse.getEaten()
         self.upgrade()
+        corpse.getEaten()
 
     def upgrade(self):
-        newTroll = SuperTroll(self.rect.x,self.rect.y)
-        trolls.append(newTroll)
-        self.die()
+        self.positionInList = trolls.index(self)
+        trolls[self.positionInList] = SuperTroll(self.rect.x, self.rect.y)
+
 
 class SuperTroll(Troll, pygame.sprite.Sprite):
     def __init__(self, x, y):
-        trolls.append(self)
+
         pygame.sprite.Sprite.__init__(self)
 
         self.image = pygame.Surface(tileSize)
@@ -219,6 +227,7 @@ class SuperTroll(Troll, pygame.sprite.Sprite):
         self.rect.y = self.position[1]
         #sets transparency to black
         self.image.set_colorkey((0,0,0))
+
 
     def findPlayerOrCorpse(self):
         """Checks in each direction for 5 blocks, if player is found
@@ -331,11 +340,11 @@ class movableWall(Block, pygame.sprite.Sprite):
 
         for troll in trolls:
             if troll.rect.colliderect(self):
-                troll.die(); self.smash(); self.leaveRubble()
+                troll.die(); self.smash(); self.leaveRubble(); print(len(trolls))
 
     def leaveRubble(self):
         rubble = Rubble(self.position)
-        environment.append(rubble)
+        debris.append(rubble)
 
 class Exit(Block, pygame.sprite.Sprite):
     def __init__(self):
@@ -372,12 +381,13 @@ class Rubble(pygame.sprite.Sprite):
         self.rect.x = position[0]
         self.rect.y = position[1]
         self.position = position
-    def isCorpse(self): return False
+
+        debris.append(self)
+
 
 class Corpse(pygame.sprite.Sprite):
     def __init__(self, xpos, ypos):
         pygame.sprite.Sprite.__init__(self)
-
 
         self.image = pygame.Surface(tileSize)
         self.rect = self.image.get_rect()
@@ -388,10 +398,12 @@ class Corpse(pygame.sprite.Sprite):
         self.rect.y = ypos
         self.position = xpos, ypos
 
+        corpses.append(self)
+
     #Deletes from environment list when troll eaten
     def getEaten(self):
-        self.posInList = environment.index(self)
-        environment.pop(self)
+        self.posInList = corpses.index(self)
+        corpses.pop(self.posInList)
         print("removed from list")
 
     def isCorpse(self): return True
@@ -402,8 +414,8 @@ def draw():
 
     for wall in walls: screen.blit(wallimg, wall.position)
 
-    for environmentPiece in environment: screen.blit(environmentPiece.image,
-                                                     environmentPiece.position)
+    for corpse in corpses: screen.blit(corpse.image,corpse.position)
+    for rubble in debris: screen.blit(rubble.image, rubble.position)
     for troll in trolls: screen.blit(troll.image, troll.position)
     screen.blit(player.image,player.position)
 
@@ -445,7 +457,6 @@ mazeString = mazeGenerator.generate(int(width/tileSize[0]/2),
 walls = [] #holds all wall objects, immovable or unmovable
 mazeList = [] # when string is broken to list each list row is added
 mazeRow = [] # each character is the mazeString is added to this
-environment = []
 
 for i in mazeString:
     if i == "\n": mazeList.append(mazeRow); mazeRow = []
@@ -485,6 +496,10 @@ dead = False
 trolls = [Troll(trollimg) for i in range(3)]
 
 gate = Exit()
+
+debris = []
+corpses = []
+
 #----[End Create Entities]------------------------------------------------------
 #----[Main Run Loop]------------------------------------------------------------
 print("----[NEW RUN]----")
@@ -507,14 +522,14 @@ while True: #Game loop
             directions = troll.getmoves()
             playerInDirection = troll.findPlayerOrCorpse()
             #troll will follow player if it can see it
-            for environmentPiece in environment:
-                if troll.rect.colliderect(environmentPiece) and environmentPiece.isCorpse():
-                    troll.eat(environmentPiece)
-                    troll.eaten = True
+            for corpse in corpses:
+                if troll.rect.colliderect(corpse):
+                    troll.eat(corpse)
             if playerInDirection is not None:
                 troll.move(playerInDirection)
             #if directions is empty list then error is raised
             elif directions != []: troll.move(choice(directions))
+
 
     #----[Death based stuff]----------------------------------------------------
     if not dead and playerInput:
