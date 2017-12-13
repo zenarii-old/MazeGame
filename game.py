@@ -4,6 +4,7 @@ import mazeGenerator
 import animations
 from os import path
 
+pygame.font.init()
 
 class Entity(pygame.sprite.Sprite):
     def __init__(self, spriteImage):
@@ -84,18 +85,19 @@ class Player(Entity, pygame.sprite.Sprite):
     def __init__(self, img):
         Entity.__init__(self, img)
         pygame.sprite.Sprite.__init__(self)
+        self.dead = False
 
     def checkDead(self):
         for troll in trolls:
             if troll.rect.colliderect(self):
-                dead = True
-                print("You dead")
+                self.dead = True
 
 class Troll(Entity, pygame.sprite.Sprite):
     def __init__(self, img):
         Entity.__init__(self, img)
         pygame.sprite.Sprite.__init__(self)
         self.eaten = False
+        self.name = "Troll"
 
     def getmoves(self):
         self.canMoveRight = True
@@ -206,14 +208,11 @@ class Troll(Entity, pygame.sprite.Sprite):
         self.rect.y = self.position[1]
 
     def die(self):
-        try:
             self.posInList = trolls.index(self)
             trolls.pop(self.posInList)
             trollCorpse = Corpse(self.position[0], self.position[1])
             corpses.append(trollCorpse)
-        except ValueError: # For somereason troll.die is called when unneeded
-            print("Troll.die() method called")
-        print(len(trolls))
+
 
     def eat(self, corpse):
         self.upgrade()
@@ -352,7 +351,7 @@ class movableWall(Block, pygame.sprite.Sprite):
 
         for troll in trolls:
             if troll.rect.colliderect(self):
-                troll.die(); self.smash(); self.leaveRubble(); print(len(trolls))
+                troll.die(); self.smash(); self.leaveRubble();
 
     def leaveRubble(self):
         rubble = Rubble(self.position)
@@ -416,12 +415,11 @@ class Corpse(pygame.sprite.Sprite):
     def getEaten(self):
         self.posInList = corpses.index(self)
         corpses.pop(self.posInList)
-        print("removed from list")
 
     def isCorpse(self): return True
 
 #----[Draw To Screen Function]--------------------------------------------------
-def draw():
+def drawGameLoop():
     screen.fill((0,0,0))
 
     for corpse in corpses: screen.blit(corpse.image,corpse.position)
@@ -517,6 +515,7 @@ print("----[NEW RUN]----")
 
 while True: #Game loop
     playerInput = False
+
     #Gets player input
     for event in pygame.event.get():
         pressed = pygame.key.get_pressed()
@@ -539,16 +538,18 @@ while True: #Game loop
             if playerInDirection is not None:
                 troll.move(playerInDirection)
             #if directions is empty list then error is raised
-            elif directions != []: troll.move(choice(directions))
+            elif directions !=[]: troll.move(choice(directions))
 
 
     #----[Death based stuff]----------------------------------------------------
-    if not dead and playerInput:
+    if not player.dead and playerInput:
         player.checkDead()
-    if dead:
+    if player.dead:
         animations.GAMEOVER()
         sys.exit()
+    if not player.dead:
+        if player.rect.colliderect(gate): print("Win"); sys.exit()
     playerInput = False
     #draws changes to screen
-    draw()
+    drawGameLoop()
 #----[End Program]--------------------------------------------------------------
