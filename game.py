@@ -416,9 +416,9 @@ class Corpse(pygame.sprite.Sprite):
     def isCorpse(self): return True
 
 #----[Draw To Screen Functions]-------------------------------------------------
-def drawDeathScreen(deathScreen):
+def drawEndScreen(endScreen):
     screen.fill((0,0,0))
-    screen.blit(deathScreen, (0,0))
+    screen.blit(endScreen, (0,0))
     pygame.display.flip()
     time.sleep(0.2)
     while True:
@@ -515,6 +515,7 @@ for y in range(len(mazeList)):
 #----[Set image locations]------------------------------------------------------
 startScreen = pygame.image.load(path.join("images","Title Screen.bmp"))
 deathScreen = pygame.image.load(path.join("images", "GAMEOVER!.bmp"))
+winScreen = pygame.image.load(path.join("images", "Win Screen.bmp"))
 trollimg = pygame.image.load(path.join("images","Troll.bmp"))
 playerimg = pygame.image.load(path.join("images", "Player.bmp"))
 wallimg = pygame.image.load(path.join("images", "Wall.bmp"))
@@ -572,9 +573,9 @@ while True: #Game loop
     if not player.dead and playerInput:
         player.checkDead()
     if player.dead:
-        drawDeathScreen(deathScreen)
+        drawEndScreen(deathScreen)
     if not player.dead:
-        if player.rect.colliderect(gate): print("Win"); sys.exit()
+        if player.rect.colliderect(gate): drawEndScreen(winScreen)
     playerInput = False
     #draws changes to screen
     drawGameLoop()
