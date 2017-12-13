@@ -8,6 +8,7 @@ from os import path
 class Entity(pygame.sprite.Sprite):
     def __init__(self, spriteImage):
         pygame.sprite.Sprite.__init__(self)
+        self.name = "Player"
         self.image = pygame.Surface(tileSize)
         self.rect = self.image.get_rect()
         self.image = spriteImage
@@ -34,38 +35,49 @@ class Entity(pygame.sprite.Sprite):
         if direction == "up":
             self.position[1] -= tileSize[1]; self.rect.y = self.position[1]
             for wall in walls:
-                if self.rect.colliderect(wall):
+                if self.rect.colliderect(wall) and self.name == "Player":
                     wall.push("up")
                     self.position[1] += tileSize[1]
                     self.rect.y = self.position[1]
+                    break
+                elif self.rect.colliderect(wall) and self.name == "Super Troll":
+                    wall.smash(); wall.leaveRubble() #Troll smashes wall and moves
                     break
 
         elif direction == "left":
             self.position[0] -= tileSize[0]; self.rect.x = self.position[0]
             for wall in walls:
-                if self.rect.colliderect(wall):
+                if self.rect.colliderect(wall) and self.name == "Player":
                     wall.push("left")
                     self.position[0] += tileSize[0]
                     self.rect.x = self.position[0]
                     break
-
+                elif self.rect.colliderect(wall) and self.name == "Super Troll":
+                    wall.smash(); wall.leaveRubble()
+                    break
 
         elif direction == "down":
             self.position[1] += tileSize[1]; self.rect.y = self.position[1]
             for wall in walls:
-                if self.rect.colliderect(wall):
+                if self.rect.colliderect(wall) and self.name == "Player":
                     wall.push("down")
                     self.position[1] -= tileSize[1]
                     self.rect.y = self.position[1]
+                    break
+                elif self.rect.colliderect(wall) and self.name == "Super Troll":
+                    wall.smash(); wall.leaveRubble()
                     break
 
         elif direction == "right":
             self.position[0] += tileSize[0]; self.rect.x = self.position[0]
             for wall in walls:
-                if self.rect.colliderect(wall):
+                if self.rect.colliderect(wall) and self.name == "Player":
                     wall.push("right")
                     self.position[0] -= tileSize[0]
                     self.rect.x = self.position[0]
+                    break
+                elif self.rect.colliderect(wall) and self.name == "Super Troll":
+                    wall.smash(); wall.leaveRubble()
                     break
 
 class Player(Entity, pygame.sprite.Sprite):
@@ -215,6 +227,7 @@ class Troll(Entity, pygame.sprite.Sprite):
 class SuperTroll(Troll, pygame.sprite.Sprite):
     def __init__(self, x, y):
 
+        self.name = "Super Troll"
         pygame.sprite.Sprite.__init__(self)
 
         self.image = pygame.Surface(tileSize)
@@ -282,7 +295,6 @@ class Block(pygame.sprite.Sprite):
     def smash(self):
         self.positionInList = walls.index(self)
         walls.pop(self.positionInList)
-
 
 class immovableWall(Block, pygame.sprite.Sprite):
     def __init__(self,x,y):
@@ -412,21 +424,20 @@ class Corpse(pygame.sprite.Sprite):
 def draw():
     screen.fill((0,0,0))
 
-    for wall in walls: screen.blit(wallimg, wall.position)
-
     for corpse in corpses: screen.blit(corpse.image,corpse.position)
     for rubble in debris: screen.blit(rubble.image, rubble.position)
     for troll in trolls: screen.blit(troll.image, troll.position)
-    screen.blit(player.image,player.position)
+    for wall in walls: screen.blit(wallimg, wall.position)
 
+    screen.blit(player.image,player.position)
     screen.blit(gate.image, gate.position)
+
     pygame.display.flip()
 #----[End Draw To Screen Function]----------------------------------------------
 #As screen may not fit all tiles unexpected behaviour occurs at borders
 #this shiould prevent that
 def getLength(length):
     lengthRemainder = length % 32
-    print(lengthRemainder)
     if lengthRemainder is not 0:
         return length + (32 - lengthRemainder)
     else: return length
