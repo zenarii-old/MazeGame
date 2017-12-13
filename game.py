@@ -136,7 +136,8 @@ class Troll(Entity, pygame.sprite.Sprite):
         wallHit = False
         for i in range(1,6):
             self.rect.x -= tileSize[0]
-            if self.rect.colliderect(player): return "left"
+            if self.rect.colliderect(player):
+                self.rect.x = self.position[0]; return "left"
             for wall in walls:
                 if wall.rect.colliderect(self): wallHit = True
             #checks through the environment peices to see if they are a corpse
@@ -150,7 +151,8 @@ class Troll(Entity, pygame.sprite.Sprite):
         wallHit = False
         for i in range(1,6):
             self.rect.x += tileSize[0]
-            if player.rect.colliderect(self): return "right"
+            if player.rect.colliderect(self):
+                self.rect.x = self.position[0]; return "right"
             for wall in walls:
                 if wall.rect.colliderect(self): wallHit = True
             for environmentPiece in environment:
@@ -163,7 +165,8 @@ class Troll(Entity, pygame.sprite.Sprite):
         wallHit = False
         for i in range(1,6):
             self.rect.y -= tileSize[1]
-            if player.rect.colliderect(self): return "up"
+            if player.rect.colliderect(self):
+                self.rect.y = self.position[1]; return "up"
             for wall in walls:
                 if wall.rect.colliderect(self): wallHit = True
             for environmentPiece in environment:
@@ -173,9 +176,11 @@ class Troll(Entity, pygame.sprite.Sprite):
         self.rect.y = self.position[1]
 
         #downwards
+        wallHit = False
         for i in range(1,6):
             self.rect.y += tileSize[1]
-            if player.rect.colliderect(self): return "down"
+            if player.rect.colliderect(self):
+                self.rect.y = self.position[1]; return "down"
             for wall in walls:
                 if wall.rect.colliderect(self): wallHit = True
             for environmentPiece in environment:
@@ -185,14 +190,14 @@ class Troll(Entity, pygame.sprite.Sprite):
         self.rect.y = self.position[1]
 
     def die(self):
-        self.posInList = trolls.index(self)
-        trolls.pop(self.posInList)
-        trollCorpse = Corpse(self.position[0], self.position[1])
-        environment.append(trollCorpse)
+            self.posInList = trolls.index(self)
+            trolls.pop(self.posInList)
+            trollCorpse = Corpse(self.position[0], self.position[1])
+            environment.append(trollCorpse)
 
     def eat(self, corpse):
         corpse.getEaten()
-        print("Troll is big")
+        self.upgrade()
 
     def upgrade(self):
         newTroll = SuperTroll(self.rect.x,self.rect.y)
@@ -201,11 +206,12 @@ class Troll(Entity, pygame.sprite.Sprite):
 
 class SuperTroll(Troll, pygame.sprite.Sprite):
     def __init__(self, x, y):
+        trolls.append(self)
         pygame.sprite.Sprite.__init__(self)
 
-
         self.image = pygame.Surface(tileSize)
-        self.rect = ([32,32],[32,32])
+        self.rect = self.image.get_rect()
+
         self.position = [x, y]
 
         self.image = STrollimg
@@ -214,50 +220,42 @@ class SuperTroll(Troll, pygame.sprite.Sprite):
         #sets transparency to black
         self.image.set_colorkey((0,0,0))
 
-"""    def getmoves(self):
-        self.canMoveRight = True
-        self.canMoveUp = True
-        self.canMoveDown = True
-        self.canMoveLeft = True
-
-        #checks if can move right
-        self.rect.x += tileSize[0]
-        for wall in walls:
-            if wall.rect.colliderect(self):
-                self.canMoveRight = False; break
-        self.rect.x = self.position[0]
-
-        #checks to see if can move left
-        self.rect.x -= tileSize[0]
-        for wall in walls:
-            if wall.rect.colliderect(self):
-                self.canMoveLeft = False; break
-        self.rect.x = self.position[0]
-        #checks to see if can move up
-
-        self.rect.y -= tileSize[1]
-        for wall in walls:
-            if wall.rect.colliderect(self):
-                self.canMoveUp = False; break
-        self.rect.y = self.position[1]
-
-        #check to see if can move down
-        self.rect.y += tileSize[1]
-        for wall in walls:
-            if wall.rect.colliderect(self):
-                self.canMoveDown = False; break
-        self.rect.y = self.position[1]
-
-        #adds the possible directions to list then returns it
-        directions = []
-        if self.canMoveLeft: directions.append("left")
-        if self.canMoveRight: directions.append("right")
-        if self.canMoveUp: directions.append("up")
-        if self.canMoveDown: directions.append("down")
-        return directions
-
     def findPlayerOrCorpse(self):
-        return None"""
+        """Checks in each direction for 5 blocks, if player is found
+        then moves in that direction, if hits wall stops searching.
+
+        Returns None if player isn't found"""
+        #in left direction
+        for i in range(1,6):
+            self.rect.x -= tileSize[0]
+            if self.rect.colliderect(player):
+                self.rect.x = self.position[0]; return "left"
+            #checks through the environment peices to see if they are a corpse
+        self.rect.x = self.position[0]
+
+        #in right direction
+        wallHit = False
+        for i in range(1,6):
+            self.rect.x += tileSize[0]
+            if player.rect.colliderect(self):
+                self.rect.x = self.position[0]; return "right"
+        self.rect.x = self.position[0]
+
+        #in up direction
+        wallHit = False
+        for i in range(1,6):
+            self.rect.y -= tileSize[1]
+            if player.rect.colliderect(self):
+                self.rect.y = self.position[1]; return "up"
+        self.rect.y = self.position[1]
+
+        #downwards
+        for i in range(1,6):
+            self.rect.y += tileSize[1]
+            if player.rect.colliderect(self):
+                self.rect.y = self.position[1]; return "down"
+        self.rect.y = self.position[1]
+
 
 
 class Block(pygame.sprite.Sprite):
@@ -393,7 +391,8 @@ class Corpse(pygame.sprite.Sprite):
     #Deletes from environment list when troll eaten
     def getEaten(self):
         self.posInList = environment.index(self)
-        environment.pop()
+        environment.pop(self)
+        print("removed from list")
 
     def isCorpse(self): return True
 
@@ -483,18 +482,7 @@ STrollimg = pygame.image.load(path.join("images", "STroll.bmp"))
 player = Player(playerimg)
 dead = False
 
-troll1 = Troll(trollimg)
-troll1.position = [32,32]
-troll1.rect.x = troll1.position[0]
-troll1.rect.y = troll1.position[1]
-
-troll2 = Troll(trollimg)
-troll2.position = [32,32]
-troll2.rect.x = troll2.position[0]
-troll2.rect.y = troll2.position[1]
-
-troll3 = Troll(trollimg)
-trolls = [troll1,troll2,troll3]
+trolls = [Troll(trollimg) for i in range(3)]
 
 gate = Exit()
 #----[End Create Entities]------------------------------------------------------
@@ -527,8 +515,6 @@ while True: #Game loop
                 troll.move(playerInDirection)
             #if directions is empty list then error is raised
             elif directions != []: troll.move(choice(directions))
-            if troll.eaten:
-                troll.upgrade()
 
     #----[Death based stuff]----------------------------------------------------
     if not dead and playerInput:
