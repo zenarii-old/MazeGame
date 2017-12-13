@@ -1,10 +1,7 @@
 from random import randint, choice
-import pygame, sys
+import pygame, sys, time
 import mazeGenerator
-import animations
 from os import path
-
-pygame.font.init()
 
 class Entity(pygame.sprite.Sprite):
     def __init__(self, spriteImage):
@@ -418,7 +415,17 @@ class Corpse(pygame.sprite.Sprite):
 
     def isCorpse(self): return True
 
-#----[Draw To Screen Function]--------------------------------------------------
+#----[Draw To Screen Functions]-------------------------------------------------
+def drawDeathScreen(deathScreen):
+    screen.fill((0,0,0))
+    screen.blit(deathScreen, (0,0))
+    pygame.display.flip()
+    time.sleep(0.2)
+    while True:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT or event.type == pygame.KEYDOWN:
+                sys.exit()
+
 def drawGameLoop():
     screen.fill((0,0,0))
 
@@ -431,7 +438,23 @@ def drawGameLoop():
     screen.blit(gate.image, gate.position)
 
     pygame.display.flip()
-#----[End Draw To Screen Function]----------------------------------------------
+
+def drawStartScreen(startScreen):
+    screen.fill((0,0,0))
+    screen.blit(startScreen, (0,0))
+    onStartScreen = True
+    pygame.display.flip()
+    while onStartScreen:
+        events = pygame.event.get()
+        for event in events:
+            pressed = pygame.key.get_pressed()
+            if event.type == pygame.KEYDOWN:
+                return
+            elif event.type == pygame.QUIT:
+                sys.exit()
+
+    pygame.display.flip()
+#----[End Draw To Screen Functions]---------------------------------------------
 #As screen may not fit all tiles unexpected behaviour occurs at borders
 #this shiould prevent that
 def getLength(length):
@@ -490,6 +513,8 @@ for y in range(len(mazeList)):
 
 #----[End Wall Generation]------------------------------------------------------
 #----[Set image locations]------------------------------------------------------
+startScreen = pygame.image.load(path.join("images","Title Screen.bmp"))
+deathScreen = pygame.image.load(path.join("images", "GAMEOVER!.bmp"))
 trollimg = pygame.image.load(path.join("images","Troll.bmp"))
 playerimg = pygame.image.load(path.join("images", "Player.bmp"))
 wallimg = pygame.image.load(path.join("images", "Wall.bmp"))
@@ -512,6 +537,8 @@ corpses = []
 #----[End Create Entities]------------------------------------------------------
 #----[Main Run Loop]------------------------------------------------------------
 print("----[NEW RUN]----")
+
+drawStartScreen(startScreen)
 
 while True: #Game loop
     playerInput = False
@@ -545,8 +572,7 @@ while True: #Game loop
     if not player.dead and playerInput:
         player.checkDead()
     if player.dead:
-        animations.GAMEOVER()
-        sys.exit()
+        drawDeathScreen(deathScreen)
     if not player.dead:
         if player.rect.colliderect(gate): print("Win"); sys.exit()
     playerInput = False
