@@ -528,7 +528,7 @@ STrollimg = pygame.image.load(path.join("images", "STroll.bmp"))
 player = Player(playerimg)
 dead = False
 
-trolls = [Troll(trollimg) for i in range(3)]
+trolls = [Troll(trollimg) for i in range(5)]
 
 gate = Exit()
 
