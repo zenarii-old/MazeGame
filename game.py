@@ -435,7 +435,7 @@ def drawGameLoop():
     for wall in walls: screen.blit(wallimg, wall.position)
 
     screen.blit(player.image,player.position)
-    screen.blit(gate.image, gate.position)
+    screen.blit(gateimg, gate.position)
 
     pygame.display.flip()
 
@@ -522,6 +522,7 @@ wallimg = pygame.image.load(path.join("images", "Wall.bmp"))
 rubbleimg = pygame.image.load(path.join("images", "Rubble.bmp"))
 corpseimg = pygame.image.load(path.join("images", "Corpse.bmp"))
 STrollimg = pygame.image.load(path.join("images", "STroll.bmp"))
+gateimg =  pygame.image.load(path.join("images","Gate.bmp"))
 #----[End Images]---------------------------------------------------------------
 
 #----[Create Entities]----------------------------------------------------------
