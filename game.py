@@ -1,7 +1,11 @@
 from random import randint, choice
 import pygame, sys, time
-import mazeGenerator
+import mazeGenerator, pathfinder
 from os import path
+
+global visualise
+visualise = False
+
 
 class Entity(pygame.sprite.Sprite):
     def __init__(self, spriteImage):
@@ -274,7 +278,40 @@ class SuperTroll(Troll, pygame.sprite.Sprite):
                 self.rect.y = self.position[1]; return "down"
         self.rect.y = self.position[1]
 
+#This troll uses pathfinding to directly hunt the player
+class SeekerTroll(Troll, pygame.sprite.Sprite):
+    def __init__(self):
+        Entity.__init__(self, SeekerTrollimg)
+        pygame.sprite.Sprite.__init__(self)
 
+
+        print(self.position)
+        self.name = "Seeker Troll"
+
+
+        self.rect.x = self.position[0]
+        self.rect.y = self.position[1]
+        #sets transparency to black
+        self.image.set_colorkey((0,0,0))
+
+    def getmoves(self):
+        route = pathfinder.search(self.position, player.position,
+                                            gameGraph.nodes, screen, visualise)
+        #Gets the nextMove the troll should take, which is last element
+        #of list route
+
+        try:
+            nextMove = route[-1].position
+        #if the path is blocked a type error is raised
+        #This returns a sting so choice() doesn't act upon the string
+        except TypeError: return "No moves"
+        except IndexError: return "No moves"
+        if nextMove == [self.position[0]-32,self.position[1]]: return ["left"]
+        elif nextMove == [self.position[0],self.position[1]-32]: return ["up"]
+        elif nextMove == [self.position[0]+32,self.position[1]]: return ["right"]
+        elif nextMove == [self.position[0],self.position[1]+32]: return ["down"]
+
+    def eat(self, corpse): pass
 
 class Block(pygame.sprite.Sprite):
     def __init__(self,x,y):
@@ -289,6 +326,7 @@ class Block(pygame.sprite.Sprite):
         self.rect.x = self.position[0]
         self.rect.y = self.position[1]
     def smash(self):
+        gameGraph.update(walls)
         self.positionInList = walls.index(self)
         walls.pop(self.positionInList)
 
@@ -350,13 +388,15 @@ class movableWall(Block, pygame.sprite.Sprite):
             if troll.rect.colliderect(self):
                 troll.die(); self.smash(); self.leaveRubble();
 
+        gameGraph.update(walls)
+
     def leaveRubble(self):
         rubble = Rubble(self.position)
         debris.append(rubble)
 
 class Exit(Block, pygame.sprite.Sprite):
     def __init__(self):
-        self.side = choice(["Top","Bottom"])#,"Bottom","Left","Right")
+        self.side = choice(["Top","Bottom"])#"Left","Right")
         self.rect = ([32,32],[32,32])
         if self.side == "Top":
             self.position = [0,0]
@@ -427,7 +467,8 @@ def drawEndScreen(endScreen):
                 sys.exit()
 
 def drawGameLoop():
-    screen.fill((0,0,0))
+    if not visualise:
+        screen.fill((0,0,0))
 
     for corpse in corpses: screen.blit(corpse.image,corpse.position)
     for rubble in debris: screen.blit(rubble.image, rubble.position)
@@ -436,6 +477,8 @@ def drawGameLoop():
 
     screen.blit(player.image,player.position)
     screen.blit(gateimg, gate.position)
+    if visualise:
+        gameGraph.visualise(screen)
 
     pygame.display.flip()
 
@@ -482,6 +525,7 @@ upKey = pygame.K_w
 leftKey = pygame.K_a
 downKey = pygame.K_s
 rightKey = pygame.K_d
+visKey = pygame.K_x
 #----[End Game Setup]-----------------------------------------------------------
 #----[Wall Generation]----------------------------------------------------------
 mazeString = mazeGenerator.generate(int(width/tileSize[0]/2),
@@ -510,6 +554,12 @@ for y in range(len(mazeList)):
                 wall = movableWall(x*32,y*32)
             #adds the wall, whatever type, to the list of walls
             walls.append(wall)
+#----[Setup Pathfinding]--------------------------------------------------------
+gameGraph = pathfinder.SimpleGraph(width, height, walls)
+#For each node, gets all the nieghbors
+for node in gameGraph.nodes: node.getNeighbors(gameGraph.nodes)
+gameGraph.search((32,32),(64,32))
+#----[End Setup of Graph]-------------------------------------------------------
 
 #----[End Wall Generation]------------------------------------------------------
 #----[Set image locations]------------------------------------------------------
@@ -523,6 +573,7 @@ rubbleimg = pygame.image.load(path.join("images", "Rubble.bmp"))
 corpseimg = pygame.image.load(path.join("images", "Corpse.bmp"))
 STrollimg = pygame.image.load(path.join("images", "STroll.bmp"))
 gateimg =  pygame.image.load(path.join("images","Gate.bmp"))
+SeekerTrollimg = pygame.image.load(path.join("images","SeekTroll.bmp"))
 #----[End Images]---------------------------------------------------------------
 
 #----[Create Entities]----------------------------------------------------------
@@ -530,18 +581,22 @@ player = Player(playerimg)
 dead = False
 
 trolls = [Troll(trollimg) for i in range(5)]
+trolls.append(SeekerTroll())
 
 gate = Exit()
 
 debris = []
 corpses = []
 
+randomVariable = str(print("1"))
+print(randomVariable)
+
 #----[End Create Entities]------------------------------------------------------
 #----[Main Run Loop]------------------------------------------------------------
 print("----[NEW RUN]----")
-
+gameChange = False
 drawStartScreen(startScreen)
-
+drawGameLoop()
 while True: #Game loop
     playerInput = False
 
@@ -555,8 +610,11 @@ while True: #Game loop
         elif pressed[leftKey]: player.move("left");  playerInput = True
         elif pressed[downKey]: player.move("down");  playerInput = True
         elif pressed[rightKey]: player.move("right");  playerInput = True
+        elif pressed[visKey]: visualise = not visualise; gameChange = True
     #moves trolls
-    if playerInput:
+    if not player.dead:
+        player.checkDead()
+    if playerInput and not player.dead:
         for troll in trolls:
             directions = troll.getmoves()
             playerInDirection = troll.findPlayerOrCorpse()
@@ -568,7 +626,8 @@ while True: #Game loop
                 troll.move(playerInDirection)
             #if directions is empty list then error is raised
             elif directions !=[]: troll.move(choice(directions))
-
+    if playerInput or gameChange:
+        drawGameLoop()
 
     #----[Death based stuff]----------------------------------------------------
     if not player.dead and playerInput:
@@ -578,6 +637,7 @@ while True: #Game loop
     if not player.dead:
         if player.rect.colliderect(gate): drawEndScreen(winScreen)
     playerInput = False
+    gameChange = False
     #draws changes to screen
-    drawGameLoop()
+
 #----[End Program]--------------------------------------------------------------
