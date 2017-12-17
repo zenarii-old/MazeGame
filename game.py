@@ -154,11 +154,11 @@ class Troll(Entity, pygame.sprite.Sprite):
             if self.rect.colliderect(player):
                 self.rect.x = self.position[0]; return "left"
             for wall in walls:
-                if wall.rect.colliderect(self): wallHit = True
+                if wall.rect.colliderect(self): wallHit = True; break
             #checks through the environment peices to see if they are a corpse
             for corpse in corpses:
                 if corpse.rect.colliderect(self):
-                    if corpse.isCorpse():
+                    if corpse.isCorpse() and not wallHit:
                         self.rect.x = self.position[0]; return "left"
             if wallHit: break #won't keep following through walls
         self.rect.x = self.position[0]
@@ -170,10 +170,10 @@ class Troll(Entity, pygame.sprite.Sprite):
             if player.rect.colliderect(self):
                 self.rect.x = self.position[0]; return "right"
             for wall in walls:
-                if wall.rect.colliderect(self): wallHit = True
+                if wall.rect.colliderect(self): wallHit = True; break
             for corpse in corpses:
                 if corpse.rect.colliderect(self):
-                    if corpse.isCorpse():
+                    if corpse.isCorpse() and not wallHit:
                         self.rect.x = self.position[0]; return "right"
             if wallHit: break #won't keep following through walls
         self.rect.x = self.position[0]
@@ -185,10 +185,10 @@ class Troll(Entity, pygame.sprite.Sprite):
             if player.rect.colliderect(self):
                 self.rect.y = self.position[1]; return "up"
             for wall in walls:
-                if wall.rect.colliderect(self): wallHit = True
+                if wall.rect.colliderect(self): wallHit = True; break
             for corpse in corpses:
                 if corpse.rect.colliderect(self):
-                    if corpse.isCorpse():
+                    if corpse.isCorpse() and not wallHit:
                         self.rect.y = self.position[1]; return "up"
             if wallHit: break
         self.rect.y = self.position[1]
@@ -200,10 +200,11 @@ class Troll(Entity, pygame.sprite.Sprite):
             if player.rect.colliderect(self):
                 self.rect.y = self.position[1]; return "down"
             for wall in walls:
-                if wall.rect.colliderect(self): wallHit = True
+                if wall.rect.colliderect(self): wallHit = True; break
+
             for corpse in corpses:
                 if corpse.rect.colliderect(self):
-                    if corpse.isCorpse():
+                    if corpse.isCorpse() and not wallHit:
                         self.rect.y = self.position[1]; return "down"
             if wallHit: break
         self.rect.y = self.position[1]
